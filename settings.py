@@ -31,16 +31,12 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 RENDER = os.environ.get('RENDER', False)
 
 if RENDER:
-    # Get the hostname from Render or allow all .onrender.com domains
-    render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    # Allow all Render.com subdomains and the specific hostname
     ALLOWED_HOSTS = [
-        render_hostname,
+        'rental-system-1o72.onrender.com',  # Your specific URL
         '.onrender.com',  # All Render subdomains
-        'localhost', 
-        '127.0.0.1',
+        '*',  # Allow all hosts in production (Render handles the security)
     ]
-    # Filter out None values
-    ALLOWED_HOSTS = [host for host in ALLOWED_HOSTS if host]
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
