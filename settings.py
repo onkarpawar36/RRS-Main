@@ -27,7 +27,17 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']  # Update this for production with your actual domain
+# Render.com provides RENDER environment variable
+RENDER = os.environ.get('RENDER', False)
+
+if RENDER:
+    ALLOWED_HOSTS = [
+        os.environ.get('RENDER_EXTERNAL_HOSTNAME'),
+        'localhost', 
+        '127.0.0.1',
+    ]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -39,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'accounts',
     'rooms',
     'chat',
@@ -46,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -135,8 +147,19 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# WhiteNoise configuration for static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Static files storage configuration (Django 4.2+)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# WhiteNoise configuration
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
 
 # Media files (Uploaded files)
 MEDIA_URL = '/media/'
@@ -146,9 +169,25 @@ MEDIA_ROOT = BASE_DIR / 'media'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+
+# HTTPS settings for production
+if RENDER:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')}" if RENDER else "",
+    ]
+    # Remove empty strings
+    CORS_ALLOWED_ORIGINS = [origin for origin in CORS_ALLOWED_ORIGINS if origin]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -159,3 +198,25 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'rooms:home'
 LOGOUT_REDIRECT_URL = 'accounts:login'
+
+# Logging configuration for production
+if RENDER:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+                'propagate': False,
+            },
+        },
+    }
