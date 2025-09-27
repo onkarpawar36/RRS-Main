@@ -1,0 +1,1 @@
+web: gunicorn rental_system_project.wsgi:application
