@@ -12,7 +12,7 @@
 
 ### STEP 2: Web Service (2 min)  
 - [ ] New + → Web Service → Connect GitHub
-- [ ] Select: `onkarpawar36/renatl_system`
+- [ ] Select: `onkarpawar36/rental_system`
 - [ ] Name: `rental-system`
 - [ ] Build: `chmod +x build.sh start.sh && ./build.sh`
 - [ ] Start: `./start.sh`

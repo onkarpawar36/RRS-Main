@@ -19,7 +19,7 @@
 ### 2️⃣ CREATE WEB SERVICE (2 minutes)
 1. Click **"New +"** → **"Web Service"**
 2. **"Build and deploy from Git repository"**
-3. Connect GitHub → Select: **`onkarpawar36/renatl_system`**
+3. Connect GitHub → Select: **`onkarpawar36/rental_system`**
 4. Copy these EXACT settings:
    ```
    Name: rental-system

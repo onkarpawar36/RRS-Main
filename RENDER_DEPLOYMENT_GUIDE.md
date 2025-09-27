@@ -26,7 +26,7 @@ Your project is 100% ready to deploy! Just follow these simple steps:
 
 1. Click **"New +"** → **"Web Service"**
 2. **"Build and deploy from a Git repository"**
-3. Connect GitHub → Select: `onkarpawar36/renatl_system`
+3. Connect GitHub → Select: `onkarpawar36/rental_system`
 4. Fill in these EXACT settings:
 
    ```
