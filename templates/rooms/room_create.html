@@ -1,0 +1,672 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if room %}Edit Room{% else %}Add New Room{% endif %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-container">
+                <div class="form-header text-center mb-4">
+                    <h2>{% if room %}Edit Room Listing{% else %}List Your Property{% endif %}</h2>
+                    <p class="text-muted">Fill in the details to {% if room %}update{% else %}create{% endif %} your room listing</p>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" class="room-form" id="roomForm">
+                    {% csrf_token %}
+                    
+                    <!-- Debug: Show form errors -->
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <h5>Form Errors:</h5>
+                            {{ form.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if image_formset.errors %}
+                        <div class="alert alert-danger">
+                            <h5>Image Formset Errors:</h5>
+                            {{ image_formset.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h4>
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Room Title *</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.title.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Give your room an attractive title</div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label">Description *</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.description.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Describe your room, nearby facilities, and what makes it special</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Category *</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.category.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Room Type *</label>
+                                {{ form.room_type }}
+                                {% if form.room_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.room_type.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Details -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-map-marker-alt me-2"></i>Location Details
+                        </h4>
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Address *</label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.address.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">City *</label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.city.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">State *</label>
+                                {{ form.state }}
+                                {% if form.state.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.state.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">Pincode *</label>
+                                {{ form.pincode }}
+                                {% if form.pincode.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.pincode.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing & Details -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-rupee-sign me-2"></i>Pricing & Room Details
+                        </h4>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Monthly Rent (₹) *</label>
+                                {{ form.price }}
+                                {% if form.price.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.price.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                              <div class="col-md-6">
+                                  <label class="form-label">Security Deposit (₹)</label>
+                                  {{ form.security_deposit }}
+                                  {% if form.security_deposit.errors %}
+                                      <div class="invalid-feedback d-block">
+                                          {{ form.security_deposit.errors.0 }}
+                                      </div>
+                                  {% endif %}
+                              </div>
+                            
+                            <div class="col-md-12">
+                                <label class="form-label">Area (sq ft) *</label>
+                                {{ form.area_sqft }}
+                                {% if form.area_sqft.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.area_sqft.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">Bedrooms *</label>
+                                {{ form.bedrooms }}
+                                {% if form.bedrooms.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.bedrooms.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">Bathrooms *</label>
+                                {{ form.bathrooms }}
+                                {% if form.bathrooms.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.bathrooms.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">Max Occupancy *</label>
+                                {{ form.max_occupancy }}
+                                {% if form.max_occupancy.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.max_occupancy.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Floor</label>
+                                {{ form.floor }}
+                                {% if form.floor.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.floor.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Available From</label>
+                                {{ form.available_from }}
+                                {% if form.available_from.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.available_from.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Leave blank if available immediately</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amenities -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-star me-2"></i>Amenities
+                        </h4>
+                        
+                        <div class="amenities-grid">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="amenity-item">
+                                        {{ form.wifi }}
+                                        <label class="form-check-label">
+                                            <i class="fas fa-wifi me-2"></i>WiFi
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="amenity-item">
+                                        {{ form.parking }}
+                                        <label class="form-check-label">
+                                            <i class="fas fa-car me-2"></i>Parking
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="amenity-item">
+                                        {{ form.ac }}
+                                        <label class="form-check-label">
+                                            <i class="fas fa-snowflake me-2"></i>Air Conditioning
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="amenity-item">
+                                        {{ form.laundry }}
+                                        <label class="form-check-label">
+                                            <i class="fas fa-tshirt me-2"></i>Laundry Service
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="amenity-item">
+                                        {{ form.food_included }}
+                                        <label class="form-check-label">
+                                            <i class="fas fa-utensils me-2"></i>Food Included
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="amenity-item">
+                                        {{ form.gym }}
+                                        <label class="form-check-label">
+                                            <i class="fas fa-dumbbell me-2"></i>Gym/Fitness Center
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Room Images -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-camera me-2"></i>Room Images
+                        </h4>
+                        <p class="text-muted mb-3">Upload images of your room to help potential tenants see what you're offering. The first image will be used as the main photo.</p>
+                        
+                        <div class="image-upload-section">
+                            {{ image_formset.management_form }}
+                            <div id="image-forms">
+                                {% for form in image_formset %}
+                                    <div class="image-form-item" data-form-index="{{ forloop.counter0 }}">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <div class="image-upload-wrapper">
+                                                    {{ form.image }}
+                                                    {% if form.image.errors %}
+                                                        <div class="invalid-feedback d-block">
+                                                            {{ form.image.errors.0 }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                {% if forloop.counter0 > 0 %}
+                                                    <button type="button" class="btn btn-outline-danger remove-image-btn">
+                                                        <i class="fas fa-trash"></i> Remove
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if form.instance.image %}
+                                            <div class="current-image mt-2">
+                                                <img src="{{ form.instance.image.url }}" alt="Current image" class="img-thumbnail" style="max-width: 150px;">
+                                                <div class="form-check mt-1">
+                                                    {{ form.DELETE }}
+                                                    <label class="form-check-label text-danger">
+                                                        Delete this image
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <button type="button" id="add-image-btn" class="btn btn-outline-primary mt-3">
+                                <i class="fas fa-plus me-2"></i>Add Another Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="form-section">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>{% if room %}Update Listing{% else %}Create Listing{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-container {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.form-header h2 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.form-section {
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.section-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+}
+
+.form-control,
+.form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.1);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.amenities-grid .amenity-item {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.amenities-grid .amenity-item:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.amenities-grid .form-check-input:checked + .form-check-label {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.amenities-grid .form-check {
+    margin: 0;
+}
+
+.amenities-grid .form-check-input {
+    margin-right: 10px;
+}
+
+.amenities-grid .form-check-label {
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.image-upload-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.image-form-item {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.image-upload-wrapper {
+    position: relative;
+}
+
+.image-upload-wrapper input[type="file"] {
+    padding: 15px;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    background: #fafbfc;
+}
+
+.remove-image-btn {
+    width: 100%;
+}
+
+.current-image img {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.btn-lg {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.form-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+    .form-container {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image formset management
+let formCount = parseInt(document.querySelector('#id_image_set-TOTAL_FORMS').value);
+const maxForms = 5; // Maximum number of image forms
+
+document.getElementById('add-image-btn').addEventListener('click', function() {
+    if (formCount >= maxForms) {
+        alert(`You can upload maximum ${maxForms} images.`);
+        return;
+    }
+    
+    const formContainer = document.getElementById('image-forms');
+    const emptyForm = formContainer.querySelector('.image-form-item').cloneNode(true);
+    
+    // Update form index
+    const newFormIndex = formCount;
+    emptyForm.setAttribute('data-form-index', newFormIndex);
+    
+    // Clear input values
+    const fileInput = emptyForm.querySelector('input[type="file"]');
+    fileInput.value = '';
+    fileInput.name = fileInput.name.replace(/image_set-\d+/, `image_set-${newFormIndex}`);
+    fileInput.id = fileInput.id.replace(/id_image_set-\d+/, `id_image_set-${newFormIndex}`);
+    
+    // Remove current image display
+    const currentImageDiv = emptyForm.querySelector('.current-image');
+    if (currentImageDiv) {
+        currentImageDiv.remove();
+    }
+    
+    // Add remove button if not present
+    const removeBtn = emptyForm.querySelector('.remove-image-btn');
+    if (!removeBtn) {
+        const colDiv = emptyForm.querySelector('.col-md-4');
+        colDiv.innerHTML = '<button type="button" class="btn btn-outline-danger remove-image-btn"><i class="fas fa-trash"></i> Remove</button>';
+    }
+    
+    // Append new form
+    formContainer.appendChild(emptyForm);
+    
+    // Update total forms count
+    formCount++;
+    document.querySelector('#id_image_set-TOTAL_FORMS').value = formCount;
+    
+    // Add event listener to new remove button
+    emptyForm.querySelector('.remove-image-btn').addEventListener('click', function() {
+        removeImageForm(emptyForm);
+    });
+});
+
+// Remove image form
+function removeImageForm(formElement) {
+    // Images are now optional, so allow removing all forms
+    formElement.remove();
+    formCount--;
+    document.querySelector('#id_image_set-TOTAL_FORMS').value = formCount;
+    
+    // Reindex remaining forms
+    document.querySelectorAll('.image-form-item').forEach((form, index) => {
+        form.setAttribute('data-form-index', index);
+        
+        const inputs = form.querySelectorAll('input');
+        inputs.forEach(input => {
+            if (input.name) {
+                input.name = input.name.replace(/image_set-\d+/, `image_set-${index}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_image_set-\d+/, `id_image_set-${index}`);
+            }
+        });
+    });
+}
+
+// Add event listeners to existing remove buttons
+document.querySelectorAll('.remove-image-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const formElement = this.closest('.image-form-item');
+        removeImageForm(formElement);
+    });
+});
+
+// Form validation
+document.getElementById('roomForm').addEventListener('submit', function(e) {
+    let hasErrors = false;
+    
+    // Check required fields
+    const requiredFields = ['title', 'description', 'category', 'room_type', 'address', 'city', 'state', 'pincode', 'price', 'area_sqft', 'bedrooms', 'bathrooms', 'max_occupancy'];
+    
+    requiredFields.forEach(fieldName => {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field && !field.value.trim()) {
+            field.classList.add('is-invalid');
+            hasErrors = true;
+        } else if (field) {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    // Check if at least one image is uploaded (for new rooms) - Made optional
+    const isEditMode = document.querySelector('[name="title"]').dataset.editMode === 'true';
+    if (!isEditMode) {
+        const imageInputs = document.querySelectorAll('input[type="file"][name*="image"]');
+        let hasImage = false;
+        imageInputs.forEach(input => {
+            if (input.files && input.files.length > 0) {
+                hasImage = true;
+            }
+        });
+
+        if (!hasImage) {
+            // Made images optional - just warn but don't prevent submission
+            const confirmSubmit = confirm('No images uploaded. Your listing will be more attractive with photos. Do you want to continue anyway?');
+            if (!confirmSubmit) {
+                hasErrors = true;
+            }
+        }
+    }
+    
+    if (hasErrors) {
+        e.preventDefault();
+        alert('Please fill in all required fields and correct any errors.');
+        return false;
+    }
+});
+
+// Real-time validation
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') || this.classList.contains('required')) {
+                if (!this.value.trim()) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            }
+        });
+    });
+});
+
+// Price formatting
+document.querySelector('[name="price"]').addEventListener('input', function() {
+    // Remove non-numeric characters
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+  document.querySelector('[name="security_deposit"]').addEventListener('input', function() {
+      // Remove non-numeric characters
+      this.value = this.value.replace(/[^0-9]/g, '');
+  });// Pincode validation
+document.querySelector('[name="pincode"]').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+    if (this.value.length > 6) {
+        this.value = this.value.slice(0, 6);
+    }
+});
+</script>
+{% endblock %}

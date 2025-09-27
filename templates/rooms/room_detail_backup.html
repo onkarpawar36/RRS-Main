@@ -1,0 +1,842 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ room.title }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Ensure chat button has high specificity */
+    #start-chat-btn {
+        position: relative !important;
+        z-index: 1000 !important;
+        pointer-events: auto !important;
+    }
+    
+    /* Disable any potential notification overlays */
+    .notification-overlay,
+    .popup-overlay {
+        display: none !important;
+    }
+
+    /* Room detail page styles */
+    .room-detail-image {
+        height: 400px;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .thumbnail {
+        height: 60px;
+        object-fit: cover;
+        border-radius: 5px;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+
+    .thumbnail.active,
+    .thumbnail:hover {
+        opacity: 1;
+        border: 2px solid #007bff;
+    }
+
+    .room-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .room-price-large {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #28a745;
+    }
+
+    .room-price-large small {
+        font-size: 1rem;
+        color: #6c757d;
+    }
+
+    .detail-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+    }
+
+    .amenity-item {
+        padding: 8px 0;
+        color: #6c757d;
+    }
+
+    .amenity-item.available {
+        color: #28a745;
+        font-weight: 500;
+    }
+
+    .sidebar-content {
+        position: sticky;
+        top: 20px;
+    }
+
+    .owner-card,
+    .details-card,
+    .safety-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .owner-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        color: #6c757d;
+    }
+
+    .detail-value {
+        font-weight: 500;
+    }
+
+    .safety-item {
+        padding: 5px 0;
+    }
+
+    .bookmark-btn.bookmarked {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+
+    .review-item {
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+
+    .review-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .rating {
+        color: #ffc107;
+    }
+
+    @media (max-width: 768px) {
+        .room-title {
+            font-size: 1.5rem;
+        }
+        
+        .room-price-large {
+            font-size: 1.5rem;
+        }
+        
+        .sidebar-content {
+            position: static;
+            margin-top: 20px;
+        }
+        
+        .quick-details .col-6 {
+            margin-bottom: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Image Gallery -->
+            <div class="room-gallery mb-4">
+                <div id="roomCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for image in room.images.all %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image.image.url }}" 
+                                     class="d-block w-100 room-detail-image" 
+                                     alt="{{ room.title }}">
+                            </div>
+                        {% empty %}
+                            <div class="carousel-item active">
+                                <img src="{% static 'images/default-room.jpg' %}" 
+                                     class="d-block w-100 room-detail-image" 
+                                     alt="{{ room.title }}">
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if room.images.count > 1 %}
+                        <button class="carousel-control-prev" type="button" data-bs-target="#roomCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#roomCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    {% endif %}
+                </div>
+                
+                <!-- Image Thumbnails -->
+                {% if room.images.count > 1 %}
+                    <div class="image-thumbnails mt-3">
+                        <div class="row g-2">
+                            {% for image in room.images.all %}
+                                <div class="col-2">
+                                    <img src="{{ image.image.url }}" 
+                                         class="img-fluid thumbnail {% if forloop.first %}active{% endif %}" 
+                                         data-bs-target="#roomCarousel" 
+                                         data-bs-slide-to="{{ forloop.counter0 }}"
+                                         alt="Thumbnail {{ forloop.counter }}">
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Room Information -->
+            <div class="room-info">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="room-title">{{ room.title }}</h1>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>{{ room.address }}
+                        </p>
+                        <p class="text-muted">
+                            {{ room.city }}, {{ room.state }} {{ room.pincode }}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <div class="room-price-large">₹{{ room.price|floatformat:0 }}<small>/month</small></div>
+                        <div class="room-badges">
+                            <span class="badge bg-primary">{{ room.get_category_display }}</span>
+                            <span class="badge bg-secondary">{{ room.get_room_type_display }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Details -->
+                <div class="quick-details mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <div class="detail-card text-center">
+                                <i class="fas fa-bed fa-2x text-primary mb-2"></i>
+                                <h5>{{ room.bedrooms }}</h5>
+                                <small class="text-muted">Bedroom{{ room.bedrooms|pluralize }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="detail-card text-center">
+                                <i class="fas fa-bath fa-2x text-info mb-2"></i>
+                                <h5>{{ room.bathrooms }}</h5>
+                                <small class="text-muted">Bathroom{{ room.bathrooms|pluralize }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="detail-card text-center">
+                                <i class="fas fa-users fa-2x text-success mb-2"></i>
+                                <h5>{{ room.max_occupancy }}</h5>
+                                <small class="text-muted">Max Occupancy</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="detail-card text-center">
+                                <i class="fas fa-calendar fa-2x text-warning mb-2"></i>
+                                <h5>{% if room.is_available %}Available{% else %}Occupied{% endif %}</h5>
+                                <small class="text-muted">Status</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="description-section mb-4">
+                    <h3>Description</h3>
+                    <p class="room-description">{{ room.description|linebreaks }}</p>
+                </div>
+
+                <!-- Amenities -->
+                <div class="amenities-section mb-4">
+                    <h3>Amenities</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="amenity-item {% if room.wifi %}available{% endif %}">
+                                <i class="fas fa-wifi me-2"></i>WiFi
+                            </div>
+                            <div class="amenity-item {% if room.parking %}available{% endif %}">
+                                <i class="fas fa-car me-2"></i>Parking
+                            </div>
+                            <div class="amenity-item {% if room.ac %}available{% endif %}">
+                                <i class="fas fa-snowflake me-2"></i>Air Conditioning
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="amenity-item {% if room.laundry %}available{% endif %}">
+                                <i class="fas fa-tshirt me-2"></i>Laundry
+                            </div>
+                            <div class="amenity-item {% if room.food %}available{% endif %}">
+                                <i class="fas fa-utensils me-2"></i>Food Included
+                            </div>
+                            <div class="amenity-item {% if room.gym %}available{% endif %}">
+                                <i class="fas fa-dumbbell me-2"></i>Gym/Fitness
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Section -->
+                {% if reviews %}
+                    <div class="reviews-section mb-4">
+                        <h3>Reviews & Ratings</h3>
+                        <div class="reviews-summary mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="rating-display me-3">
+                                    <span class="rating-score">{{ room.average_rating|floatformat:1 }}</span>
+                                    <div class="stars">
+                                        {% for i in "12345"|make_list %}
+                                            {% if room.average_rating >= i|add:0 %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="mb-0">{{ reviews.count }} Review{{ reviews.count|pluralize }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="reviews-list">
+                            {% for review in reviews|slice:":3" %}
+                                <div class="review-item">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="reviewer-info">
+                                            <strong>{{ review.user.get_full_name|default:review.user.username }}</strong>
+                                            <div class="stars">
+                                                {% for i in "12345"|make_list %}
+                                                    {% if review.rating >= i|add:0 %}
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star text-warning"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                                    </div>
+                                    <p class="review-text">{{ review.comment }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if reviews.count > 3 %}
+                            <button class="btn btn-outline-primary" onclick="showAllReviews()">
+                                View All Reviews ({{ reviews.count }})
+                            </button>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="sidebar-content">
+                <!-- Owner Information -->
+                <div class="owner-card mb-4">
+                    <h5>Property Owner</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ room.owner.profile.profile_picture.url }}" 
+                             alt="{{ room.owner.get_full_name|default:room.owner.username }}" 
+                             class="owner-avatar me-3">
+                        <div>
+                            <h6 class="mb-1">{{ room.owner.get_full_name|default:room.owner.username }}</h6>
+                            <small class="text-muted">Member since {{ room.owner.date_joined|date:"Y" }}</small>
+                        </div>
+                    </div>
+                    
+                    {% if user.is_authenticated and user != room.owner %}
+                        <div class="owner-actions">
+                            <button class="btn btn-primary w-100 mb-2 chat-btn" 
+                                    id="start-chat-btn"
+                                    data-room-id="{{ room.id }}"
+                                    data-owner-id="{{ room.owner.id }}" 
+                                    data-owner-name="{{ room.owner.get_full_name|default:room.owner.username }}"
+                                    data-action="start-chat">
+                                <i class="fas fa-comment me-2"></i>Message Owner
+                            </button>
+                            <button class="btn btn-outline-primary w-100" onclick="showContactInfo()">
+                                <i class="fas fa-phone me-2"></i>Show Contact
+                            </button>
+                        </div>
+                    {% elif not user.is_authenticated %}
+                        <div class="text-center">
+                            <p class="text-muted mb-3">Please log in to contact the owner</p>
+                            <a href="{% url 'accounts:login' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login to Contact
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                {% if user.is_authenticated %}
+                    <div class="action-buttons mb-4">
+                        <button class="btn btn-outline-danger w-100 mb-2 bookmark-btn {% if is_bookmarked %}bookmarked{% endif %}" 
+                                data-room-id="{{ room.id }}">
+                            <i class="fas fa-heart me-2"></i>
+                            <span class="bookmark-text">
+                                {% if is_bookmarked %}Remove from Favorites{% else %}Add to Favorites{% endif %}
+                            </span>
+                        </button>
+                        
+                        {% if user == room.owner %}
+                            <a href="{% url 'rooms:room_edit' room.pk %}" class="btn btn-warning w-100 mb-2">
+                                <i class="fas fa-edit me-2"></i>Edit Listing
+                            </a>
+                            <a href="{% url 'rooms:room_delete' room.pk %}" 
+                               class="btn btn-outline-danger w-100 mb-2"
+                               onclick="return confirm('Are you sure you want to delete this room? This action cannot be undone.')">
+                                <i class="fas fa-trash-alt me-2"></i>Delete Listing
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <!-- Room Details Card -->
+                <div class="details-card mb-4">
+                    <h5>Details</h5>
+                    <div class="detail-row">
+                        <span class="detail-label">Property Type:</span>
+                        <span class="detail-value">{{ room.get_room_type_display }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Category:</span>
+                        <span class="detail-value">{{ room.get_category_display }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Floor:</span>
+                        <span class="detail-value">{{ room.floor|default:"Not specified" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Deposit:</span>
+                        <span class="detail-value">
+                            {% if room.security_deposit > 0 %}
+                                ₹{{ room.security_deposit|floatformat:0 }}
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Available From:</span>
+                        <span class="detail-value">{{ room.available_from|date:"M d, Y"|default:"Immediately" }}</span>
+                    </div>
+                </div>
+
+                <!-- Safety & Verification -->
+                <div class="safety-card mb-4">
+                    <h5>Safety & Verification</h5>
+                    <div class="safety-item">
+                        <i class="fas fa-shield-alt text-success me-2"></i>
+                        Verified Property
+                    </div>
+                    <div class="safety-item">
+                        <i class="fas fa-user-check text-success me-2"></i>
+                        Identity Verified Owner
+                    </div>
+                    <div class="safety-item">
+                        <i class="fas fa-camera text-info me-2"></i>
+                        Real Photos
+                    </div>
+                </div>
+
+                <!-- Report/Share -->
+                <div class="additional-actions">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="btn btn-outline-secondary w-100 btn-sm" onclick="shareRoom()">
+                                <i class="fas fa-share-alt me-1"></i>Share
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-warning w-100 btn-sm" onclick="reportRoom()">
+                                <i class="fas fa-flag me-1"></i>Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Info Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contact Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-phone text-primary me-2"></i>
+                        <strong>Phone:</strong> {{ room.owner.profile.phone|default:"Not provided" }}
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope text-primary me-2"></i>
+                        <strong>Email:</strong> {{ room.owner.email }}
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Please be respectful when contacting the owner. Mention you found this property on RentalHub.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<style>
+.room-detail-image {
+    height: 400px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.thumbnail {
+    height: 60px;
+    object-fit: cover;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.thumbnail.active,
+.thumbnail:hover {
+    opacity: 1;
+    border: 2px solid #007bff;
+}
+
+.room-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.room-price-large {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.room-price-large small {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+.detail-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.amenity-item {
+    padding: 8px 0;
+    color: #6c757d;
+}
+
+.amenity-item.available {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.sidebar-content {
+    position: sticky;
+    top: 20px;
+}
+
+.owner-card,
+.details-card,
+.safety-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.owner-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #6c757d;
+}
+
+.detail-value {
+    font-weight: 500;
+}
+
+.safety-item {
+    padding: 5px 0;
+}
+
+.bookmark-btn.bookmarked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.review-item {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.review-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.rating-display {
+    text-align: center;
+}
+
+.rating-score {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffc107;
+}
+
+.stars {
+    font-size: 0.9rem;
+}
+
+.contact-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.contact-item:last-child {
+    border-bottom: none;
+}
+
+@media (max-width: 768px) {
+    .room-title {
+        font-size: 1.5rem;
+    }
+    
+    .room-price-large {
+        font-size: 1.5rem;
+    }
+    
+    .sidebar-content {
+        position: static;
+        margin-top: 30px;
+    }
+    
+    .quick-details .col-6 {
+        margin-bottom: 15px;
+    }
+}
+</style>
+
+{% block extra_js %}
+<script>
+// Bookmark functionality
+document.querySelector('.bookmark-btn')?.addEventListener('click', function() {
+    const roomId = this.dataset.roomId;
+    const bookmarkText = this.querySelector('.bookmark-text');
+    console.log('Bookmark button clicked for room ID:', roomId);
+    
+    fetch(`/room/${roomId}/bookmark/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Bookmark response data:', data);
+        if (data.bookmarked) {
+            this.classList.add('bookmarked');
+            bookmarkText.textContent = 'Remove from Favorites';
+        } else {
+            this.classList.remove('bookmarked');
+            bookmarkText.textContent = 'Add to Favorites';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
+
+// Show contact info
+function showContactInfo() {
+    new bootstrap.Modal(document.getElementById('contactModal')).show();
+}
+
+// Share room
+function shareRoom() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ room.title }}',
+            text: 'Check out this room: {{ room.title }}',
+            url: window.location.href
+        });
+    } else {
+        // Fallback - copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Link copied to clipboard!');
+        });
+    }
+}
+
+// Report room
+function reportRoom() {
+    // This would open a report modal in a real application
+    alert('Report feature coming soon. Please contact support if you have concerns.');
+}
+
+// Chat functionality - Complete override with multiple safeguards
+(function() {
+    'use strict';
+    
+    function initChatButton() {
+        const chatBtn = document.getElementById('start-chat-btn');
+        if (!chatBtn) {
+            console.log('❌ CHAT: Button not found');
+            return;
+        }
+        
+        // Clear any existing handlers completely
+        chatBtn.replaceWith(chatBtn.cloneNode(true));
+        const newChatBtn = document.getElementById('start-chat-btn');
+        
+        // Disable browser notifications if they're interfering
+        if ('Notification' in window) {
+            console.log('📵 CHAT: Suppressing notifications during chat init');
+        }
+        
+        // Our clean click handler
+        newChatBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            console.log('🚀 CHAT: Processing chat request...');
+            
+            const roomId = this.dataset.roomId || window.location.pathname.split('/').filter(Boolean).pop();
+            const ownerName = this.dataset.ownerName;
+            
+            console.log('� CHAT Details:', { roomId, ownerName });
+            
+            // Immediate visual feedback
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-rocket me-2"></i>Opening Chat...';
+            this.disabled = true;
+            this.style.pointerEvents = 'none';
+            
+            // Navigate directly - no delays
+            const chatUrl = `/chat/start/${roomId}/`;
+            console.log('🔗 CHAT: Redirecting to:', chatUrl);
+            
+            window.location.href = chatUrl;
+        });
+        
+        console.log('✅ CHAT: Enhanced chat button ready!');
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initChatButton);
+    } else {
+        initChatButton();
+    }
+    
+    // Also initialize after a short delay to override any late-loading scripts
+    setTimeout(initChatButton, 1000);
+})();
+
+// Show all reviews
+function showAllReviews() {
+    // This would load more reviews or open a modal
+    alert('Show all reviews feature coming soon!');
+}
+
+// CSRF token helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Thumbnail click functionality
+document.querySelectorAll('.thumbnail').forEach((thumb, index) => {
+    thumb.addEventListener('click', function() {
+        // Remove active class from all thumbnails
+        document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+        // Add active class to clicked thumbnail
+        this.classList.add('active');
+    });
+});
+</script>
+
+{% csrf_token %}
+{% endblock %}

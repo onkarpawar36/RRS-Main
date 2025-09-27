@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6">
+                <div class="hero-content fade-in">
+                    <h1 class="display-4 fw-bold text-white mb-4">
+                        Find Your Perfect <span class="text-warning">Rental Space</span>
+                    </h1>
+                    <p class="lead text-white-50 mb-4">
+                        Discover comfortable rooms, PGs, and flats tailored to your needs. 
+                        Whether you're a student, professional, or family, we've got you covered.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="{% url 'rooms:room_list' %}" class="btn btn-warning btn-lg me-3">
+                            <i class="fas fa-search me-2"></i>Browse Rooms
+                        </a>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'rooms:room_create' %}" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-plus me-2"></i>List Your Property
+                            </a>
+                        {% else %}
+                            <a href="{% url 'accounts:signup' %}" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Join Us
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-stats slide-in-right">
+                    <div class="row g-4">
+                        <div class="col-6">
+                            <div class="stat-card text-center">
+                                <div class="stat-icon mb-3">
+                                    <i class="fas fa-home fa-3x text-warning"></i>
+                                </div>
+                                <h3 class="text-white">{{ total_rooms }}+</h3>
+                                <p class="text-white-50 mb-0">Available Rooms</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card text-center">
+                                <div class="stat-icon mb-3">
+                                    <i class="fas fa-map-marker-alt fa-3x text-warning"></i>
+                                </div>
+                                <h3 class="text-white">{{ total_cities }}+</h3>
+                                <p class="text-white-50 mb-0">Cities</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Rooms Section -->
+{% if featured_rooms %}
+<section class="featured-section py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="section-header text-center mb-5">
+                    <h2 class="section-title">Featured Properties</h2>
+                    <p class="section-subtitle text-muted">Handpicked premium rooms just for you</p>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            {% for room in featured_rooms %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card room-card h-100 fade-in">
+                        <div class="position-relative">
+                            <img src="{{ room.main_image }}" 
+                                 alt="{{ room.title }}" 
+                                 class="card-img-top room-card-img">
+                            <div class="room-price">₹{{ room.price|floatformat:0 }}/mo</div>
+                            <div class="room-badge">
+                                <span class="badge bg-warning text-dark">Featured</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ room.title|truncatewords:6 }}</h5>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ room.city }}, {{ room.state }}
+                            </p>
+                            <p class="card-text">{{ room.description|truncatewords:15 }}</p>
+                            <div class="room-features mb-3">
+                                <span class="feature-item">
+                                    <i class="fas fa-bed me-1"></i>{{ room.bedrooms }} Bed{{ room.bedrooms|pluralize }}
+                                </span>
+                                <span class="feature-item">
+                                    <i class="fas fa-bath me-1"></i>{{ room.bathrooms }} Bath{{ room.bathrooms|pluralize }}
+                                </span>
+                                <span class="feature-item">
+                                    <i class="fas fa-users me-1"></i>{{ room.max_occupancy }} Person{{ room.max_occupancy|pluralize }}
+                                </span>
+                            </div>
+                            <div class="room-amenities mb-3">
+                                {% if room.wifi %}<span class="amenity-badge">WiFi</span>{% endif %}
+                                {% if room.parking %}<span class="amenity-badge">Parking</span>{% endif %}
+                                {% if room.ac %}<span class="amenity-badge">AC</span>{% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ room.get_category_display }} • {{ room.get_room_type_display }}</small>
+                                <a href="{% url 'rooms:room_detail' room.pk %}" class="btn btn-primary btn-sm">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-primary btn-lg">
+                View All Properties <i class="fas fa-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Recent Rooms Section -->
+{% if recent_rooms %}
+<section class="recent-section py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="section-header text-center mb-5">
+                    <h2 class="section-title">Recently Added</h2>
+                    <p class="section-subtitle text-muted">Fresh listings from verified owners</p>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            {% for room in recent_rooms %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card room-card-compact h-100 fade-in">
+                        <div class="position-relative">
+                            <img src="{{ room.main_image }}" 
+                                 alt="{{ room.title }}" 
+                                 class="card-img-top room-card-img-compact">
+                            <div class="room-price-compact">₹{{ room.price|floatformat:0 }}</div>
+                        </div>
+                        <div class="card-body p-3">
+                            <h6 class="card-title">{{ room.title|truncatewords:4 }}</h6>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ room.city }}
+                            </p>
+                            <div class="room-features-compact">
+                                <span><i class="fas fa-bed me-1"></i>{{ room.bedrooms }}</span>
+                                <span><i class="fas fa-bath me-1"></i>{{ room.bathrooms }}</span>
+                                <span><i class="fas fa-users me-1"></i>{{ room.max_occupancy }}</span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent p-3 pt-0">
+                            <a href="{% url 'rooms:room_detail' room.pk %}" class="btn btn-sm btn-outline-primary w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="section-header text-center mb-5">
+                    <h2 class="section-title">Why Choose RentalHub?</h2>
+                    <p class="section-subtitle text-muted">Experience the difference with our platform</p>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center fade-in">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-shield-alt fa-3x text-primary"></i>
+                    </div>
+                    <h4>Verified Listings</h4>
+                    <p class="text-muted">All properties are verified by our team to ensure authenticity and quality.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center fade-in">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-comments fa-3x text-success"></i>
+                    </div>
+                    <h4>Direct Communication</h4>
+                    <p class="text-muted">Chat directly with property owners without any middleman or commission.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center fade-in">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-mobile-alt fa-3x text-info"></i>
+                    </div>
+                    <h4>Easy Booking</h4>
+                    <p class="text-muted">Simple and hassle-free booking process with instant confirmations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h3 class="mb-2">Ready to Find Your Perfect Room?</h3>
+                <p class="mb-0">Join thousands of satisfied tenants who found their ideal space through RentalHub.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{% url 'rooms:room_list' %}" class="btn btn-warning btn-lg">
+                    <i class="fas fa-search me-2"></i>Start Searching
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 30px 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.room-price {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.room-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+}
+
+.room-card-img {
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.room-card:hover .room-card-img {
+    transform: scale(1.05);
+}
+
+.room-card-img-compact {
+    height: 150px;
+    object-fit: cover;
+}
+
+.room-price-compact {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.feature-item {
+    display: inline-block;
+    margin-right: 15px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.room-features-compact {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.room-features-compact span {
+    margin-right: 10px;
+}
+
+.amenity-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    display: inline-block;
+}
+
+.section-title {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+}
+
+.feature-card {
+    padding: 30px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.room-card-compact {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.room-card-compact:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        text-align: center;
+        padding: 50px 0;
+    }
+    
+    .hero-buttons {
+        margin-top: 30px;
+    }
+    
+    .hero-buttons .btn {
+        display: block;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    
+    .stat-card {
+        margin-bottom: 20px;
+        padding: 20px 15px;
+    }
+}
+</style>
+{% endblock %}

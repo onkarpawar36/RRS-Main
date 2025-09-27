@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Edit Profile
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if profile_form.non_field_errors or user_form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ profile_form.non_field_errors }}
+                                {{ user_form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- User Information Section -->
+                        <div class="form-section mb-4">
+                            <h5 class="section-title mb-3">
+                                <i class="fas fa-user me-2"></i>Account Information
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ user_form.username.id_for_label }}" class="form-label">Username</label>
+                                    {{ user_form.username }}
+                                    {% if user_form.username.errors %}
+                                        <div class="text-danger">{{ user_form.username.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ user_form.email.id_for_label }}" class="form-label">Account Email</label>
+                                    {{ user_form.email }}
+                                    {% if user_form.email.errors %}
+                                        <div class="text-danger">{{ user_form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Profile Information Section -->
+                        <div class="form-section mb-4">
+                            <h5 class="section-title mb-3">
+                                <i class="fas fa-id-card me-2"></i>Personal Information
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.first_name.id_for_label }}" class="form-label">First Name *</label>
+                                    {{ profile_form.first_name }}
+                                    {% if profile_form.first_name.errors %}
+                                        <div class="text-danger">{{ profile_form.first_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.last_name.id_for_label }}" class="form-label">Last Name *</label>
+                                    {{ profile_form.last_name }}
+                                    {% if profile_form.last_name.errors %}
+                                        <div class="text-danger">{{ profile_form.last_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.email.id_for_label }}" class="form-label">Contact Email *</label>
+                                    {{ profile_form.email }}
+                                    {% if profile_form.email.errors %}
+                                        <div class="text-danger">{{ profile_form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ profile_form.phone_number.id_for_label }}" class="form-label">Phone Number *</label>
+                                    {{ profile_form.phone_number }}
+                                    {% if profile_form.phone_number.errors %}
+                                        <div class="text-danger">{{ profile_form.phone_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Profile Picture Section -->
+                        <div class="form-section mb-4">
+                            <h5 class="section-title mb-3">
+                                <i class="fas fa-camera me-2"></i>Profile Picture
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3 text-center">
+                                    <div class="current-image mb-3">
+                                        {% if user.profile.profile_picture %}
+                                            <img src="{{ user.profile.profile_picture.url }}" 
+                                                 alt="Current profile picture" 
+                                                 class="img-thumbnail rounded-circle"
+                                                 style="width: 120px; height: 120px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="default-avatar-edit">
+                                                <i class="fas fa-user fa-4x text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-8 mb-3">
+                                    <label for="{{ profile_form.profile_picture.id_for_label }}" class="form-label">
+                                        Choose New Picture
+                                    </label>
+                                    {{ profile_form.profile_picture }}
+                                    <div class="form-text">Upload a clear photo of yourself (JPG, PNG - Max 5MB)</div>
+                                    {% if profile_form.profile_picture.errors %}
+                                        <div class="text-danger">{{ profile_form.profile_picture.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div class="form-section mb-4">
+                            <h5 class="section-title mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Additional Information
+                            </h5>
+                            <div class="mb-3">
+                                <label for="{{ profile_form.bio.id_for_label }}" class="form-label">About You</label>
+                                {{ profile_form.bio }}
+                                <div class="form-text">Tell others about yourself, your interests, etc.</div>
+                                {% if profile_form.bio.errors %}
+                                    <div class="text-danger">{{ profile_form.bio.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ profile_form.address.id_for_label }}" class="form-label">Address</label>
+                                {{ profile_form.address }}
+                                <div class="form-text">Your current address or preferred area</div>
+                                {% if profile_form.address.errors %}
+                                    <div class="text-danger">{{ profile_form.address.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'accounts:profile_detail' user.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-section {
+    border-left: 4px solid #0d6efd;
+    padding-left: 20px;
+    margin-left: 10px;
+}
+
+.section-title {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.form-control, .form-control-file {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.default-avatar-edit {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #dee2e6;
+    margin: 0 auto;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+}
+
+.btn {
+    border-radius: 8px;
+    padding: 10px 20px;
+}
+
+@media (max-width: 768px) {
+    .form-section {
+        border-left: none;
+        border-top: 4px solid #0d6efd;
+        padding-left: 0;
+        padding-top: 15px;
+        margin-left: 0;
+    }
+}
+</style>
+
+<script>
+// Preview uploaded image
+document.getElementById('{{ profile_form.profile_picture.id_for_label }}').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const currentImage = document.querySelector('.current-image img, .default-avatar-edit');
+            if (currentImage.tagName === 'IMG') {
+                currentImage.src = e.target.result;
+            } else {
+                currentImage.innerHTML = `<img src="${e.target.result}" alt="Preview" class="img-thumbnail rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">`;
+            }
+        }
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

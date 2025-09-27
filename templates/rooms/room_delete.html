@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Room - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Delete Room
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Room Details -->
+                    <div class="row mb-4">
+                        <div class="col-md-5">
+                            {% if room.images.first %}
+                                <img src="{{ room.images.first.image.url }}" 
+                                     alt="{{ room.title }}" 
+                                     class="img-fluid rounded shadow-sm">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+                                    <i class="fas fa-home fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-7">
+                            <h5 class="text-dark">{{ room.title }}</h5>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ room.city }}, {{ room.state }}
+                            </p>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-rupee-sign me-1"></i>
+                                ₹{{ room.price|floatformat:0 }}/month
+                            </p>
+                            <div class="mb-2">
+                                <span class="badge bg-primary">{{ room.get_category_display }}</span>
+                                <span class="badge bg-secondary ms-1">{{ room.get_room_type_display }}</span>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Created: {{ room.created_at|date:"M d, Y" }}
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Warning Message -->
+                    <div class="alert alert-warning" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Are you sure you want to delete this room?
+                        </h6>
+                        <p class="mb-2">This action cannot be undone. Deleting this room will:</p>
+                        <ul class="mb-2">
+                            <li>Permanently remove the room listing</li>
+                            {% if image_count > 0 %}
+                                <li>Delete {{ image_count }} associated image{{ image_count|pluralize }}</li>
+                            {% endif %}
+                            {% if chat_count > 0 %}
+                                <li>Remove {{ chat_count }} chat conversation{{ chat_count|pluralize }} related to this room</li>
+                            {% endif %}
+                            {% if bookmark_count > 0 %}
+                                <li>Cancel {{ bookmark_count }} bookmark{{ bookmark_count|pluralize }} users have saved for this room</li>
+                            {% endif %}
+                        </ul>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            <small class="text-muted">
+                                {% if image_count == 0 and chat_count == 0 and bookmark_count == 0 %}
+                                    This room has no additional data to remove.
+                                {% else %}
+                                    Total items to be deleted: 
+                                    {% if image_count > 0 %}{{ image_count }} image{{ image_count|pluralize }}{% endif %}
+                                    {% if chat_count > 0 %}{% if image_count > 0 %}, {% endif %}{{ chat_count }} chat{{ chat_count|pluralize }}{% endif %}
+                                    {% if bookmark_count > 0 %}{% if image_count > 0 or chat_count > 0 %}, {% endif %}{{ bookmark_count }} bookmark{{ bookmark_count|pluralize }}{% endif %}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-3">
+                        <form method="post" class="flex-fill">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fas fa-trash-alt me-2"></i>
+                                Yes, Delete Room
+                            </button>
+                        </form>
+                        <a href="{% url 'rooms:my_rooms' %}" class="btn btn-outline-secondary flex-fill">
+                            <i class="fas fa-times me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+
+                    <!-- Alternative Actions -->
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            Not sure? You can also 
+                            <a href="{% url 'rooms:room_edit' room.pk %}" class="text-primary">edit this room</a> 
+                            or 
+                            <a href="{% url 'rooms:room_detail' room.pk %}" class="text-primary">view details</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+}
+
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

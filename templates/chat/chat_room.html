@@ -1,0 +1,594 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat with {{ owner.get_full_name|default:owner.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Fix for floating chat messages issue */
+    body {
+        overflow-x: hidden;
+        position: relative;
+    }
+    
+    /* Ensure all messages are contained properly */
+    .chat-messages {
+        position: relative;
+        z-index: 1;
+        background: white !important;
+        border: 1px solid #dee2e6;
+    }
+    
+    #messages-container {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .message-item {
+        position: relative !important;
+        margin-bottom: 1rem;
+        clear: both;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Force all messages to stay within container */
+    .container {
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+    
+    /* CRITICAL: Hide any messages that appear outside the chat container */
+    body > .message-item,
+    body > div > .message-item:not(.container .message-item),
+    .message-item:not(#chat-messages .message-item),
+    .message-item:not(.chat-messages .message-item) {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* Prevent any floating or absolute positioning on messages */
+    .message-item, .message-bubble {
+        position: static !important;
+        float: none !important;
+    }
+    
+    /* Ensure proper stacking context */
+    .card {
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Hide any text nodes that might be floating */
+    body::before, body::after {
+        display: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Chat Header -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="d-flex align-items-center">
+                                {% if owner.profile.profile_picture %}
+                                    <img src="{{ owner.profile.profile_picture.url }}" 
+                                         alt="{{ owner.get_full_name|default:owner.username }}" 
+                                         class="rounded-circle me-3" 
+                                         style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" 
+                                         style="width: 50px; height: 50px;">
+                                        <i class="fas fa-user text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h5 class="mb-0">{{ owner.get_full_name|default:owner.username }}</h5>
+                                    <small>Property Owner</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'rooms:room_detail' room.pk %}" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-home me-1"></i>View Property
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Property Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            {% if room.main_image %}
+                                <img src="{{ room.main_image }}" 
+                                     alt="{{ room.title }}" 
+                                     class="img-fluid rounded"
+                                     style="height: 80px; width: 100%; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                     style="height: 80px;">
+                                    <i class="fas fa-home fa-2x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-10">
+                            <h6 class="mb-1">{{ room.title }}</h6>
+                            <p class="text-muted mb-1">{{ room.city }}, {{ room.state }}</p>
+                            <span class="badge bg-primary">₹{{ room.price|floatformat:0 }}/month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div id="chat-messages" class="chat-messages" style="height: 400px; overflow-y: auto; padding: 20px;">
+                        <!-- Welcome message -->
+                        <div class="message-item system-message mb-3">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Start a conversation about <strong>{{ room.title }}</strong>
+                            </div>
+                        </div>
+                        
+                        <!-- Existing messages -->
+                        <div id="messages-container">
+                            {% for message in messages %}
+                                <div class="message-item {% if message.sender == user %}sent{% else %}received{% endif %}-message mb-3" data-message-id="{{ message.id }}">
+                                    <div class="message-bubble p-3 rounded-lg">
+                                        {% if message.sender != user %}
+                                            <div class="message-sender text-muted small mb-1">
+                                                {{ message.sender.get_full_name|default:message.sender.username }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="message-content">{{ message.content }}</div>
+                                        <div class="message-time text-muted small mt-1">
+                                            <i class="fas fa-clock"></i> {{ message.timestamp|date:"H:i" }}
+                                            {% if message.sender == user %}
+                                                <i class="fas fa-check ms-1 text-primary"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <!-- No messages yet, show welcome message -->
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Typing indicator -->
+                        <div id="typing-indicator" class="typing-indicator d-none mb-3">
+                            <div class="d-flex">
+                                <div class="typing-bubble bg-light rounded px-3 py-2">
+                                    <div class="typing-animation">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                    <small class="text-muted">{{ owner.get_full_name|default:owner.username }} is typing...</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Message Input -->
+                <div class="card-footer">
+                    <form id="message-form" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="chat_room_id" value="{{ chat_room.id }}">
+                        <input type="text" 
+                               name="content" 
+                               id="message-input"
+                               class="form-control" 
+                               placeholder="Type your message about {{ room.title }}..."
+                               required>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Quick Questions -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Quick Questions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-message="Hi! I'm interested in your property. Is it still available?">
+                            Is it available?
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-message="What are the nearby amenities and transport facilities?">
+                            Nearby amenities?
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-message="Can I schedule a visit to see the property?">
+                            Schedule visit?
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm quick-question" 
+                                data-message="Are pets allowed in this property?">
+                            Pet policy?
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // CRITICAL FIX: Remove any messages that appear outside the chat container
+    function cleanupMisplacedMessages() {
+        // Find all message items outside the proper container
+        const allMessages = document.querySelectorAll('.message-item');
+        const chatContainer = document.getElementById('chat-messages');
+        
+        allMessages.forEach(message => {
+            // If message is not inside the chat container, remove it
+            if (!chatContainer.contains(message)) {
+                console.log('🧹 Removing misplaced message:', message.textContent);
+                message.remove();
+            }
+        });
+        
+        // Also remove any text nodes that might be floating
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: function(node) {
+                    // Check if text contains chat-like content outside containers
+                    if (node.textContent.includes('onkarp') || 
+                        node.textContent.includes('rukmini') ||
+                        node.textContent.includes('hii') ||
+                        node.textContent.includes('here')) {
+                        const parent = node.parentElement;
+                        if (!parent.closest('#chat-messages')) {
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                    }
+                    return NodeFilter.FILTER_REJECT;
+                }
+            }
+        );
+        
+        const textNodesToRemove = [];
+        let node;
+        while (node = walker.nextNode()) {
+            textNodesToRemove.push(node);
+        }
+        
+        textNodesToRemove.forEach(textNode => {
+            console.log('🧹 Removing floating text:', textNode.textContent);
+            textNode.remove();
+        });
+    }
+    
+    // Clean up immediately and periodically
+    cleanupMisplacedMessages();
+    setInterval(cleanupMisplacedMessages, 2000);
+    
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const messagesContainer = document.getElementById('messages-container');
+    const chatMessages = document.getElementById('chat-messages');
+    const typingIndicator = document.getElementById('typing-indicator');
+    
+    let typingTimer;
+    let isTyping = false;
+    
+    // Handle form submission
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // Disable input while sending
+        messageInput.disabled = true;
+        
+        // Create FormData and explicitly set the values
+        const formData = new FormData();
+        formData.append('content', message);
+        formData.append('chat_room_id', document.querySelector('[name="chat_room_id"]').value);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        fetch('{% url "chat:send_message" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                // Add message to chat display
+                addMessageToChat(data.message.content, 'sent', data.message.sender_name, data.message.timestamp, data.message.id);
+                displayedMessageIds.add(data.message.id);
+                // Clear input
+                messageInput.value = '';
+                console.log('Message sent successfully');
+            } else {
+                console.error('Failed to send message:', data.error);
+                alert('Failed to send message: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error sending message:', error);
+            alert('Error sending message. Please try again.');
+        })
+        .finally(() => {
+            // Re-enable input
+            messageInput.disabled = false;
+            messageInput.focus();
+        });
+    });
+    
+    // Handle typing indicators
+    messageInput.addEventListener('input', function() {
+        if (!isTyping) {
+            isTyping = true;
+            // In a real implementation, you would send typing status to server
+            console.log('User started typing');
+        }
+        
+        // Clear previous timer
+        clearTimeout(typingTimer);
+        
+        // Set new timer
+        typingTimer = setTimeout(() => {
+            isTyping = false;
+            console.log('User stopped typing');
+        }, 1000);
+    });
+    
+    // Simulate receiving messages and typing indicators
+    function simulateTypingIndicator() {
+        if (Math.random() > 0.7) { // 30% chance
+            showTypingIndicator();
+            setTimeout(hideTypingIndicator, 2000 + Math.random() * 3000);
+        }
+    }
+    
+    function showTypingIndicator() {
+        typingIndicator.classList.remove('d-none');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function hideTypingIndicator() {
+        typingIndicator.classList.add('d-none');
+    }
+    
+    // Periodically simulate activity (for demo purposes)
+    setInterval(simulateTypingIndicator, 15000);
+    
+    // Handle quick questions
+    document.querySelectorAll('.quick-question').forEach(button => {
+        button.addEventListener('click', function() {
+            const message = this.dataset.message;
+            messageInput.value = message;
+            messageInput.focus();
+        });
+    });
+    
+    // Function to add message to chat - SAFE VERSION
+    function addMessageToChat(message, type, senderName = '', messageTime = '', messageId = null) {
+        // CRITICAL: Ensure we have valid containers
+        if (!messagesContainer || !chatMessages) {
+            console.error('❌ Chat containers not found!');
+            return;
+        }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message-item ${type}-message mb-3`;
+        messageDiv.style.position = 'relative';  // Force proper positioning
+        messageDiv.style.width = '100%';
+        messageDiv.style.maxWidth = '100%';
+        
+        if (messageId) {
+            messageDiv.setAttribute('data-message-id', messageId);
+        }
+        
+        const displayTime = messageTime || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        if (type === 'sent') {
+            messageDiv.innerHTML = `
+                <div class="d-flex justify-content-end">
+                    <div class="message-bubble bg-primary text-white rounded px-3 py-2" style="max-width: 70%; position: relative;">
+                        <div>${message}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="text-white-50">${displayTime}</small>
+                            <span class="message-status ms-2">
+                                <i class="fas fa-check text-white-50" title="Sent"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="d-flex">
+                    <div class="message-bubble bg-light rounded px-3 py-2" style="max-width: 70%; position: relative;">
+                        ${senderName ? `<div class="message-sender text-muted small mb-1">${senderName}</div>` : ''}
+                        <div>${message}</div>
+                        <small class="text-muted">${displayTime}</small>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // CRITICAL: Only append to the proper container
+        try {
+            messagesContainer.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            console.log('✅ Message added successfully to container');
+        } catch (error) {
+            console.error('❌ Error adding message to container:', error);
+        }
+    }
+    
+    // Auto-focus message input
+    messageInput.focus();
+
+    // Auto-focus message input on page load
+    messageInput.focus();
+    
+    // Check for new messages periodically
+    let lastMessageTime = new Date().toISOString();
+    let displayedMessageIds = new Set();
+    
+    // Mark existing messages as displayed
+    const existingMessages = document.querySelectorAll('.message-item[data-message-id]');
+    existingMessages.forEach(msg => {
+        const messageId = msg.getAttribute('data-message-id');
+        if (messageId) displayedMessageIds.add(parseInt(messageId));
+    });
+    
+    setInterval(() => {
+        checkForNewMessages();
+    }, 3000); // Check every 3 seconds for faster updates
+    
+    function checkForNewMessages() {
+        fetch(`{% url "chat:get_messages" chat_room.id %}?since=${lastMessageTime}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Checking for new messages:', data);
+            if (data.success && data.messages.length > 0) {
+                data.messages.forEach(message => {
+                    console.log('Processing message:', message);
+                    // Only add messages we haven't displayed yet
+                    if (!displayedMessageIds.has(message.id)) {
+                        if (message.is_own_message) {
+                            addMessageToChat(message.content, 'sent', message.sender_name, message.display_time, message.id);
+                        } else {
+                            addMessageToChat(message.content, 'received', message.sender_name, message.display_time, message.id);
+                        }
+                        displayedMessageIds.add(message.id);
+                    }
+                });
+                // Update lastMessageTime to the latest message timestamp
+                if (data.messages.length > 0) {
+                    lastMessageTime = data.messages[data.messages.length - 1].timestamp;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error checking for new messages:', error);
+        });
+    }
+});
+</script>
+
+<style>
+.message-bubble {
+    word-wrap: break-word;
+}
+
+.system-message {
+    text-align: center;
+}
+
+.chat-messages {
+    background: #f8f9fa;
+}
+
+.quick-question {
+    font-size: 0.875rem;
+}
+
+.sent-message {
+    text-align: right;
+}
+
+.received-message {
+    text-align: left;
+}
+
+/* Typing indicator animation */
+.typing-animation {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 8px;
+}
+
+.typing-animation span {
+    height: 8px;
+    width: 8px;
+    background-color: #999;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 3px;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-animation span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-animation span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes typing {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Message status icons */
+.message-status {
+    font-size: 0.75rem;
+}
+
+/* Smooth scrolling */
+.chat-messages {
+    scroll-behavior: smooth;
+}
+
+/* Hover effects */
+.message-bubble:hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+}
+
+/* Notification badge pulse animation */
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.badge.pulse {
+    animation: pulse 2s infinite;
+}
+</style>
+{% endblock %}

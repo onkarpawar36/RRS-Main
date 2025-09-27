@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Favorites - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-heart me-2 text-danger"></i>
+                    My Favorite Rooms
+                </h2>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-2"></i>Browse More Rooms
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-heart fa-2x mb-2"></i>
+                            <h4 class="mb-0">{{ page_obj.paginator.count }}</h4>
+                            <small>Favorite Rooms</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title mb-2">
+                                <i class="fas fa-info-circle text-primary me-1"></i>
+                                About Your Favorites
+                            </h6>
+                            <p class="card-text mb-0 small text-muted">
+                                Keep track of rooms you're interested in. You can easily remove items from your favorites 
+                                or contact owners directly from this page.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Favorites List -->
+            {% if rooms %}
+                <div class="row g-4">
+                    {% for room in rooms %}
+                        <div class="col-lg-6 col-md-6">
+                            <div class="card h-100 shadow-sm">
+                                <div class="position-relative">
+                                    <!-- Room Image -->
+                                    <a href="{% url 'rooms:room_detail' room.pk %}">
+                                        {% if room.images.first %}
+                                            <img src="{{ room.images.first.image.url }}" 
+                                                 alt="{{ room.title }}" 
+                                                 class="card-img-top" 
+                                                 style="height: 200px; object-fit: cover;">
+                                        {% else %}
+                                            <img src="{{ room.main_image }}" 
+                                                 alt="{{ room.title }}" 
+                                                 class="card-img-top" 
+                                                 style="height: 200px; object-fit: cover;">
+                                        {% endif %}
+                                    </a>
+                                    
+                                    <!-- Price Badge -->
+                                    <div class="position-absolute top-0 end-0 m-2">
+                                        <span class="badge bg-dark fs-6">₹{{ room.price|floatformat:0 }}/mo</span>
+                                    </div>
+                                    
+                                    <!-- Remove from Favorites Button -->
+                                    <div class="position-absolute top-0 start-0 m-2">
+                                        <button class="btn btn-sm btn-danger bookmark-btn bookmarked" 
+                                                data-room-id="{{ room.id }}"
+                                                title="Remove from favorites">
+                                            <i class="fas fa-heart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-body">
+                                    <h5 class="card-title mb-2">
+                                        <a href="{% url 'rooms:room_detail' room.pk %}" class="text-decoration-none">
+                                            {{ room.title }}
+                                        </a>
+                                    </h5>
+                                    <p class="card-text text-muted mb-2">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        {{ room.city }}, {{ room.state }}
+                                    </p>
+                                    <p class="card-text small text-muted mb-3">
+                                        {{ room.description|truncatechars:100 }}
+                                    </p>
+                                    
+                                    <!-- Room Details -->
+                                    <div class="row text-center mb-3">
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-bed"></i>
+                                            </small>
+                                            <span class="fw-bold small">{{ room.bedrooms }}</span>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-bath"></i>
+                                            </small>
+                                            <span class="fw-bold small">{{ room.bathrooms }}</span>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-users"></i>
+                                            </small>
+                                            <span class="fw-bold small">{{ room.max_occupancy }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Room Type and Category -->
+                                    <div class="mb-3">
+                                        <span class="badge bg-primary">{{ room.get_category_display }}</span>
+                                        <span class="badge bg-secondary ms-1">{{ room.get_room_type_display }}</span>
+                                    </div>
+                                    
+                                    <!-- Owner Info -->
+                                    <div class="d-flex align-items-center mb-2">
+                                        <img src="{% if room.owner.profile.profile_picture %}{{ room.owner.profile.profile_picture.url }}{% else %}{% static 'images/default_profile.svg' %}{% endif %}" 
+                                             alt="{{ room.owner.get_full_name|default:room.owner.username }}" 
+                                             class="rounded-circle me-2" style="width: 24px; height: 24px;">
+                                        <small class="text-muted">
+                                            by {{ room.owner.get_full_name|default:room.owner.username }}
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer bg-transparent">
+                                    <div class="btn-group w-100" role="group">
+                                        <a href="{% url 'rooms:room_detail' room.pk %}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye me-1"></i>View Details
+                                        </a>
+                                        {% if user.is_authenticated and user != room.owner %}
+                                            <button class="btn btn-outline-success btn-sm chat-btn" 
+                                                    data-owner-id="{{ room.owner.id }}" 
+                                                    data-owner-name="{{ room.owner.get_full_name|default:room.owner.username }}">
+                                                <i class="fas fa-comment me-1"></i>Message
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Favorites pagination" class="mt-5">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                        <i class="fas fa-chevron-left"></i> Previous
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                        Next <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <!-- No Favorites -->
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-heart-broken fa-5x text-muted"></i>
+                    </div>
+                    <h4>No favorite rooms yet</h4>
+                    <p class="text-muted mb-4">
+                        Start exploring rooms and add them to your favorites by clicking the 
+                        <i class="fas fa-heart text-danger"></i> button!
+                    </p>
+                    <a href="{% url 'rooms:room_list' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-search me-2"></i>Browse Available Rooms
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.bookmark-btn {
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #dc3545;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.bookmark-btn:hover {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
+}
+
+.bookmark-btn.bookmarked {
+    background: #dc3545;
+    color: white;
+}
+</style>
+
+<script>
+// Bookmark functionality
+document.querySelectorAll('.bookmark-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const roomId = this.dataset.roomId;
+        
+        fetch(`/room/${roomId}/bookmark/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.bookmarked) {
+                this.classList.add('bookmarked');
+            } else {
+                // Remove the card from the page since it's no longer bookmarked
+                this.closest('.col-lg-6').remove();
+                
+                // If no more rooms, show empty state
+                if (document.querySelectorAll('.col-lg-6').length === 0) {
+                    location.reload();
+                }
+            }
+            
+            // Show toast notification
+            if (window.showToast) {
+                window.showToast(data.message);
+            } else {
+                console.log(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+});
+
+// Chat functionality
+document.querySelectorAll('.chat-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const roomId = this.closest('.card').querySelector('.bookmark-btn').dataset.roomId;
+        window.location.href = `/chat/start/${roomId}/`;
+    });
+});
+</script>
+
+{% csrf_token %}
+{% endblock %}

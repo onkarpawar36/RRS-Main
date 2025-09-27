@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-users me-2"></i>Community Members</h2>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'accounts:signup' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Join Community
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for profile in profiles %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card shadow-sm profile-card h-100">
+                    <div class="card-body text-center">
+                        <div class="profile-img-container mb-3">
+                            {% if profile.profile_picture %}
+                                <img src="{{ profile.profile_picture.url }}" 
+                                     alt="{{ profile.get_full_name }}" 
+                                     class="profile-img-small">
+                            {% else %}
+                                <div class="default-avatar-small">
+                                    <i class="fas fa-user fa-2x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="card-title mb-1">{{ profile.get_full_name }}</h5>
+                        <p class="text-muted small mb-2">@{{ profile.user.username }}</p>
+                        
+                        {% if profile.bio %}
+                            <p class="card-text small text-muted mb-3">
+                                {{ profile.bio|truncatewords:15 }}
+                            </p>
+                        {% else %}
+                            <p class="card-text small text-muted mb-3">
+                                Member since {{ profile.created_at|date:"M Y" }}
+                            </p>
+                        {% endif %}
+                        
+                        <div class="profile-stats mb-3">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="stat-item">
+                                        <strong class="text-primary">5</strong>
+                                        <small class="d-block text-muted">Rooms</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="stat-item">
+                                        <strong class="text-success">4.8</strong>
+                                        <small class="d-block text-muted">Rating</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-actions">
+                            <a href="{% url 'accounts:profile_detail' profile.user.id %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View Profile
+                            </a>
+                            {% if user.is_authenticated and user != profile.user %}
+                                <a href="#" class="btn btn-outline-success btn-sm ms-1">
+                                    <i class="fas fa-comments me-1"></i>Chat
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No members yet</h4>
+                    <p class="text-muted">Be the first to join our community!</p>
+                    <a href="{% url 'accounts:signup' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up Now
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if profiles|length > 12 %}
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="Profile pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.profile-card {
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+}
+
+.profile-img-small {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.default-avatar-small {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin: 0 auto;
+}
+
+.profile-stats {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.stat-item strong {
+    font-size: 1.2rem;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .profile-img-small, .default-avatar-small {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
