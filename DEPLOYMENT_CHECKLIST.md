@@ -14,8 +14,8 @@
 - [ ] New + → Web Service → Connect GitHub
 - [ ] Select: `onkarpawar36/rental_system`
 - [ ] Name: `rental-system`
-- [ ] Build: `chmod +x build.sh start.sh && ./build.sh`
-- [ ] Start: `./start.sh`
+- [ ] Build: `pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --no-input --clear && python manage.py migrate`
+- [ ] Start: `gunicorn rental_system_project.wsgi:application --bind 0.0.0.0:$PORT --workers 4`
 
 ### STEP 3: Environment (30 sec)
 - [ ] Link DATABASE_URL to your PostgreSQL
@@ -70,8 +70,8 @@ Plan: Free
 ```
 Name: rental-system
 Runtime: Python 3
-Build: chmod +x build.sh start.sh && ./build.sh  
-Start: ./start.sh
+Build: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --no-input --clear && python manage.py migrate  
+Start: gunicorn rental_system_project.wsgi:application --bind 0.0.0.0:$PORT --workers 4
 Plan: Free
 ```
 

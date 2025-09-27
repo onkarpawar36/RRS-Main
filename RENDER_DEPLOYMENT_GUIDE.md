@@ -33,8 +33,8 @@ Your project is 100% ready to deploy! Just follow these simple steps:
    Name: rental-system
    Runtime: Python 3
    Branch: main
-   Build Command: chmod +x build.sh start.sh && ./build.sh
-   Start Command: ./start.sh
+   Build Command: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --no-input --clear && python manage.py migrate
+   Start Command: gunicorn rental_system_project.wsgi:application --bind 0.0.0.0:$PORT --workers 4
    Plan: Free
    ```
 
