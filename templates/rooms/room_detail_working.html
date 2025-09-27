@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+﻿    git commit -m "Initial project commit"{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}{{ room.title }} - {{ block.super }}{% endblock %}
@@ -739,7 +739,7 @@ document.querySelector('.bookmark-btn')?.addEventListener('click', function() {
     const bookmarkText = this.querySelector('.bookmark-text');
     console.log('Bookmark button clicked for room ID:', roomId);
 
-    fetch(/room//bookmark/, {
+    fetch(`/room/${roomId}/bookmark/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -788,12 +788,14 @@ function shareRoom() {
 
 // Report room functionality
 function reportRoom() {
-    {% if user.is_authenticated %}
+    // Check if CSRF token exists (indicates user is authenticated)
+    const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]');
+    if (csrfToken) {
         new bootstrap.Modal(document.getElementById('reportModal')).show();
-    {% else %}
+    } else {
         alert('Please log in to report this property.');
-        window.location.href = "{% url 'accounts:login' %}";
-    {% endif %}
+        window.location.href = '/accounts/login/';
+    }
 }
 
 // Handle report form submission
@@ -810,7 +812,7 @@ document.getElementById('reportForm')?.addEventListener('submit', function(e) {
     submitButton.disabled = true;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
     
-    fetch(/room/{{ room.id }}/report/, {
+    fetch(`/room/{{ room.id }}/report/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken'),
@@ -827,11 +829,11 @@ document.getElementById('reportForm')?.addEventListener('submit', function(e) {
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
             alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            alertDiv.innerHTML = 
+            alertDiv.innerHTML = `
                 <i class="fas fa-check-circle me-2"></i>
                 <strong>Report Submitted!</strong> Thank you for your feedback. We'll review this property.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            ;
+            `;
             document.body.appendChild(alertDiv);
             
             // Auto-remove after 5 seconds
@@ -897,7 +899,7 @@ document.getElementById('reportForm')?.addEventListener('submit', function(e) {
             this.style.pointerEvents = 'none';
 
             // Navigate directly - no delays
-            const chatUrl = /chat/start//;
+            const chatUrl = `/chat/start/${roomId}/`;
             console.log(' CHAT: Redirecting to:', chatUrl);
 
             window.location.href = chatUrl;
